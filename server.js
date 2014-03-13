@@ -2,7 +2,6 @@
 exports.install = function(self, args)
 {
   if(!args) args = {};
-
   var io = require("socket.io").listen(args.port||0, {log:false});
   self.pathSet({type:"http","http":"http://"+io.server.address().address+":"+io.server.address().port});
 
