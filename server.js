@@ -3,7 +3,24 @@ exports.install = function(self, args)
 {
   if(!args) args = {};
   var io = require("socket.io").listen(args.port||0, {log:false});
-  self.pathSet({type:"http","port":io.server.address().port,"http":args.http});
+
+  // guess any local ipv4 just once for http
+  if(!args.http)
+  {
+    var ifaces = require("os").networkInterfaces()
+    var best;
+    for (var dev in ifaces) {
+      ifaces[dev].forEach(function(details){
+        if(details.family != "IPv4") return;
+        if(details.internal) return;
+        if(!best || self.isLocalIP(best)) best = details.address;
+      });
+      args.http = "http://"+best+":"+io.server.address().port;
+    }
+    
+  }
+
+  self.pathSet({type:"http","http":args.http});    
 
   io.on("connection", function(socket){
     socket.on("packet", function(packet) {
