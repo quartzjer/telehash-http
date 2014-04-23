@@ -1,6 +1,6 @@
 {
   "name": "telehash-http",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Network http bindings for telehash on both client (browserify and node) and server (node)",
   "main": "index.js",
   "browserify":"./client.js",
