@@ -12,7 +12,7 @@ exports.install = function(self, args)
     for (var dev in ifaces) {
       ifaces[dev].forEach(function(details){
         if(details.family != "IPv4") return;
-        if(!best || self.isLocalIP(best)) best = details.address;
+        if(!best || !self.isLocalIP(details.address) || best == "127.0.0.1") best = details.address;
       });
       args.http = "http://"+best+":"+io.server.address().port;
     }
