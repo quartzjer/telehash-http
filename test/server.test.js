@@ -1,11 +1,13 @@
 var expect = require('chai').expect;
 var ext = require('../server.js');
+var sioc = require('socket.io-client');
 
 
 describe('http-server', function(){
 
   var mockMesh = {
     args:{},
+    public:{},
     lib:{Pipe:function(){return {send:function(p,l,cb){cb()}}},log:console},
     receive:function(){}
   };
@@ -23,9 +25,7 @@ describe('http-server', function(){
     ext.mesh(mockMesh, function(err, tp){
       expect(err).to.not.exist;
       expect(tp).to.be.a('object');
-      expect(tp.pipe).to.be.a('function');
       expect(tp.paths).to.be.a('function');
-      expect(tp.discover).to.be.a('function');
       expect(tp.server).to.exist;
       done();
     });
@@ -37,44 +37,26 @@ describe('http-server', function(){
       var paths = tp.paths();
       console.log(paths);
       expect(Array.isArray(paths)).to.be.true;
+      expect(paths.length).to.be.equal(1);
       done();
     });
   });
   
-  it('enables discovery', function(done){
+  it('receives a connection and packet', function(done){
     ext.mesh(mockMesh, function(err, tp){
       expect(err).to.not.exist;
-      tp.discover({}, function(err){
-        expect(err).to.not.exist;
-        done();
-      });
-    });
-  });
-  
-  it('skips unknown pipe', function(done){
-    ext.mesh(mockMesh, function(err, tp){
-      expect(err).to.not.exist;
-      expect(tp.pipe(false, {}, function(){})).to.be.false;
-      done();
-    });
-  });
+      var path = tp.paths()[0];
 
-  it('creates a pipe', function(done){
-    ext.mesh(mockMesh, function(err, tp){
-      expect(err).to.not.exist;
-      tp.pipe(false, {type:'http',url:'http://127.0.0.1'}, function(pipe){
-        expect(pipe).to.exist;
+      mockMesh.receive = function(packet, pipe)
+      {
+        expect(packet.length).to.be.equal(42);
+        expect(pipe.id).to.exist;
         done();
-      });
-    });
-  });
+      }
 
-  it('sends a packet', function(done){
-    ext.mesh(mockMesh, function(err, tp){
-      expect(err).to.not.exist;
-      tp.pipe(false, {type:'http',url:'http://127.0.0.1'}, function(pipe){
-        expect(pipe).to.exist;
-        pipe.send({},false,done);
+      var socket = sioc.connect(path.url);
+      socket.on('connect',function(){
+        socket.emit('msg',new Buffer('001d7b2274797065223a2274657374222c22666f6f223a5b22626172225d7d616e792062696e61727921','hex'));
       });
     });
   });

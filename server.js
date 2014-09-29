@@ -1,19 +1,26 @@
 exports.name = 'http-server';
 var io = require('socket.io');
+var http = require('http');
+var lob = require('lob-enc');
 
 exports.mesh = function(mesh, cbMesh)
 {
-  var args = mesh.args;
-  var tp = {pipes:{}};
-  tp.server = io.listen(args.httpport||0, {log:false});
+  var log = mesh.lib.log;
+  // make our own reference to args in case we're called multiple times (multiple http servers)
+  var args = mesh.args.http||{};
+  if(!args.protocol) args.protocol = 'http';
+  var tp = {};
+  // create a server if one not given
+  tp.server = args.server||http.createServer();
+  tp.io = io.listen(tp.server, {log:false});
 
   // http is primarily for public / non-local usage, so only return the most public path
   tp.paths = function(){
     // if there's one manually configured, use that
-    if(mesh.args.http) return [{type:'http',url:mesh.args.http}];
+    if(args.url) return [{type:'http',url:args.url}];
 
     // just use the best local one
-    var port = io.server.address().port;
+    var port = tp.server.address().port;
     var ifaces = require('os').networkInterfaces()
     var local = '127.0.0.1';
     var best = mesh.public.ipv4; // prefer that if any set
@@ -29,23 +36,44 @@ exports.mesh = function(mesh, cbMesh)
       });
     }
     best = best||local;
-    return [{type:'http',url:'http://'+best+':'+port}];
+    return [{type:'http',url:args.protocol+'://'+best+':'+port}];
   };
 
-  io.on('connection', function(socket){
-    
-    socket.on('msg', function(packet) {
-      if(!packet.data) return;
-      mesh.receive((new Buffer(packet.data, "base64")).toString("binary"), {type:"local", id:socket.id});
+  // all incoming connections turn into their own pipes
+  tp.io.on('connection', function(socket){
+    var pipe = new mesh.lib.Pipe('http-server');
+    pipe.id = socket.id;
+    pipe.from = socket.handshake.address;
+    log.debug('new http connection',pipe.from,socket.handshake.headers['user-agent']);
+
+    // send packets out to the client as messages
+    pipe.onSend = function(packet, link, cb){
+      if(!socket) return;
+      // TODO, if channel packet, use .volatile
+      var msg = lob.encode(packet);
+      socket.emit('msg', msg.toString('binary'));
+      cb();
+    }
+
+    socket.on('msg', function(msg) {
+      var packet = lob.decode(new Buffer(msg,'binary'));
+      if(!packet) return log.info('dropping invalid packet from',pipe.from,msg.toString('hex'));
+      mesh.receive(packet, pipe);
+    });
+
+    // when disconnected, fire keepalive notif since we're dead
+    socket.on('disconnect', function () {
+      pipe.emit('keepalive');
+      socket = false;
     });
   });
-  mesh.deliver("local",function(to,msg){
-    var buf = Buffer.isBuffer(msg) ? msg : new Buffer(msg, "binary");
-    if(io.sockets.sockets[to.id])
-    {
-      io.sockets.sockets[to.id].emit("packet", {data: buf.toString("base64")});
-    }
-  });
 
+  // if server was provided, just return
+  if(args.server) return cbMesh(undefined, tp);
+  
+  // otherwise return after fully listening
+  tp.server.listen(args.port||0, function(err){
+    cbMesh(err, tp);
+  });
 }
 
