@@ -1,8 +1,12 @@
-var client = require("./client.js");
-var server = require("./server.js");
+exports.name = 'http';
+exports.client = require("./client.js");
+exports.server = require("./server.js");
 
-exports.install = function(self,args)
+// wrapper to load both client and server
+exports.mesh = function(mesh, cbMesh)
 {
-  client.install(self,args);
-  server.install(self,args);
+  mesh.extend(exports.client, function(err){
+    if(err) return cbMesh(err);
+    mesh.extend(exports.server, cbMesh);
+  });
 }

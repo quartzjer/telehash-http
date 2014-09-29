@@ -1,9 +1,10 @@
+exports.name = 'http-client';
 var io = require("socket.io-client");
 
-exports.install = function(self)
+exports.mesh = function(mesh, cbMesh)
 {
   var sockets = {};
-  self.deliver("http", function(path, msg, to) {
+  mesh.deliver("http", function(path, msg, to) {
     if(!sockets[path.http]){
       sockets[path.http] = io.connect(path.http);
       sockets[path.http].on("packet", function(packet){
@@ -12,5 +13,6 @@ exports.install = function(self)
     }
     sockets[path.http].emit("packet", {data: msg.toString("base64")});
   });  
+  cbMesh();
 }
 
