@@ -23,9 +23,6 @@ describe('http-client', function(){
       expect(err).to.not.exist;
       expect(tp).to.be.a('object');
       expect(tp.pipe).to.be.a('function');
-      expect(tp.paths).to.be.a('function');
-      expect(tp.discover).to.be.a('function');
-      expect(tp.server).to.exist;
       done();
     });
   });
