@@ -6,9 +6,10 @@ var sioc = require('socket.io-client');
 describe('http-server', function(){
 
   var mockMesh = {
+    log:console,
     args:{},
     public:{},
-    lib:{Pipe:function(){return {send:function(p,l,cb){cb()}}},log:console},
+    lib:{Pipe:function(){return {send:function(p,l,cb){cb()}}}},
     receive:function(){}
   };
 

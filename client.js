@@ -5,7 +5,7 @@ var lob = require('lob-enc');
 
 exports.mesh = function(mesh, cbMesh)
 {
-  var log = mesh.lib.log;
+  var log = mesh.log;
   var tp = {pipes:{}};
 
   // turn a path into a pipe backed by a socket.io client

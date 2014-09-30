@@ -6,10 +6,11 @@ describe('http-client', function(){
 
   console.debug = console.log;
   var mockMesh = {
+    log:console,
     lib:{Pipe:function(){return {send:function(p,l,cb){
       if(!this.onSend) return cb();
       this.onSend.apply(this,arguments);
-    }}},log:console},
+    }}}},
     receive:function(){}
   };
 

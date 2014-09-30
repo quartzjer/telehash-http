@@ -5,7 +5,7 @@ var lob = require('lob-enc');
 
 exports.mesh = function(mesh, cbMesh)
 {
-  var log = mesh.lib.log;
+  var log = mesh.log;
   // make our own reference to args in case we're called multiple times (multiple http servers)
   var args = mesh.args.http||{};
   if(!args.protocol) args.protocol = 'http';
