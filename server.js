@@ -11,7 +11,12 @@ exports.mesh = function(mesh, cbMesh)
   if(!args.protocol) args.protocol = 'http';
   var tp = {};
   // create a server if one not given
-  tp.server = args.server||http.createServer();
+  tp.server = args.server||http.createServer(function(req,res){
+    // hard disconnect if not discoverable
+    if(!mesh.discoverable) return res.socket.end();
+    res.writeHead(200, {'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*'});
+    res.end(JSON.stringify(mesh.json(),0,2));
+  });
   tp.io = io.listen(tp.server, {log:false});
 
   // http is primarily for public / non-local usage, so only return the most public path
@@ -36,7 +41,9 @@ exports.mesh = function(mesh, cbMesh)
       });
     }
     best = best||local;
-    return [{type:'http',url:args.protocol+'://'+best+':'+port}];
+    var url = args.protocol+'://'+best+':'+port;
+    if(!mesh.public.url) mesh.public.url = url; // provide current url to anyone
+    return [{type:'http',url:url}];
   };
 
   // all incoming connections turn into their own pipes
