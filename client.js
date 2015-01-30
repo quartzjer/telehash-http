@@ -12,7 +12,7 @@ exports.mesh = function(mesh, cbMesh)
   tp.discover = function(opts, cbDone){
     cbDone();
     log.debug('attempting http discovery to http://127.0.0.1:42424/');
-    http.get({host:'127.0.0.1',port:42424}, function(resp){
+    http.get({host:'127.0.0.1',port:42424,withCredentials:false}, function(resp){
       var js = '';
       resp.on('data', function (chunk) { js += chunk; });
       resp.on('end', function () {

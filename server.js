@@ -14,7 +14,9 @@ exports.mesh = function(mesh, cbMesh)
   tp.server = args.server||http.createServer(function(req,res){
     // hard disconnect if not discoverable
     if(!mesh.discoverable) return res.socket.end();
-    res.writeHead(200, {'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*'});
+    res.writeHead(200, {
+      'Content-Type': 'application/javascript',
+      'Access-Control-Allow-Origin': '*',});
     res.end(JSON.stringify(mesh.json(),0,2));
   });
   tp.io = io.listen(tp.server, {log:false});
