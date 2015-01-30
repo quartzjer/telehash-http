@@ -12,16 +12,14 @@ exports.mesh = function(mesh, cbMesh)
   tp.discover = function(opts, cbDone){
     cbDone();
     log.debug('attempting http discovery to http://127.0.0.1:42424/');
-    var req = http.request({host:'127.0.0.1',port:42424,path:'/'}, function(resp){
+    http.get({host:'127.0.0.1',port:42424}, function(resp){
       var js = '';
       resp.on('data', function (chunk) { js += chunk; });
       resp.on('end', function () {
         try{ var to = JSON.parse(js); }catch(E){ }
         mesh.discovered(to);
       });
-    });
-    req.on('error',function(){});
-    req.end();
+    }).on('error',function(e){});
   }
 
   // turn a path into a pipe backed by a socket.io client
